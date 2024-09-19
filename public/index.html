@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video List</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .video-list { margin-bottom: 20px; }
+    .video-list h2 { color: #333; }
+    .video-item { cursor: pointer; margin-bottom: 10px; }
+    .video-item:hover { text-decoration: underline; }
+    .video-player { margin-top: 20px; }
+    .video-player video { width: 100%; max-width: 600px; }
+  </style>
+</head>
+<body>
+  <h1>Video List</h1>
+  
+  <div id="local-videos" class="video-list">
+    <h2>Videos from PC</h2>
+    <!-- Video names from local storage will be inserted here -->
+  </div>
+  
+  <div id="cloudinary-videos" class="video-list">
+    <h2>Videos from Cloudinary</h2>
+    <!-- Video names from Cloudinary will be inserted here -->
+  </div>
+  
+  <div id="video-player" class="video-player">
+    <!-- Video player will be created here -->
+  </div>
+  
+  <script>
+    async function fetchVideos() {
+      try {
+        const response = await fetch('/videos/list');
+        const data = await response.json();
+        
+        const localVideosContainer = document.getElementById('local-videos');
+        const cloudinaryVideosContainer = document.getElementById('cloudinary-videos');
+        const videoPlayerContainer = document.getElementById('video-player');
+        
+        if (data.local && data.local.length) {
+          data.local.forEach(video => {
+            const videoItem = document.createElement('div');
+            videoItem.className = 'video-item';
+            videoItem.textContent = video.name;
+            videoItem.onclick = () => playVideo(video.url);
+            localVideosContainer.appendChild(videoItem);
+          });
+        } else {
+          localVideosContainer.innerHTML += '<p>No videos found on PC.</p>';
+        }
+        
+        if (data.cloudinary && data.cloudinary.length) {
+          data.cloudinary.forEach(video => {
+            const videoItem = document.createElement('div');
+            videoItem.className = 'video-item';
+            videoItem.textContent = video.name;
+            videoItem.onclick = () => playVideo(video.url);
+            cloudinaryVideosContainer.appendChild(videoItem);
+          });
+        } else {
+          cloudinaryVideosContainer.innerHTML += '<p>No videos found on Cloudinary.</p>';
+        }
+        
+        function playVideo(url) {
+          videoPlayerContainer.innerHTML = `<video controls>
+            <source src="${url}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>`;
+        }
+        
+      } catch (error) {
+        console.error('Error fetching video list:', error);
+      }
+    }
+    
+    fetchVideos();
+  </script>
+</body>
+</html>
