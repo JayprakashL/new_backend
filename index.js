@@ -57,7 +57,7 @@ app.post("/upload", upload.single('file'), function(req, res) {
     const videoUrl = `http://localhost:8000/videos/trailers/${videoId}/index.m3u8`;
     
     // Store metadata in MySQL
-    const sql = `INSERT INTO videos (video_id, video_url, title, description) VALUES (?, ?, ?, ?)`;
+    const sql = `INSERT INTO videos (id, videoUrl, title, description) VALUES (?, ?, ?, ?)`;
     db.query(sql, [videoId, videoUrl, req.body.title, req.body.description], (err, result) => {
       if (err) return res.status(500).send(err.message);
       res.json({ message: "Video uploaded and converted", videoUrl });
@@ -65,4 +65,35 @@ app.post("/upload", upload.single('file'), function(req, res) {
   });
 });
 
-app.listen(8000, () => console.log("Node.js server listening on port 8000"));
+// Endpoint to stream a specific segment of a video
+app.get('/video-segment', (req, res) => {
+  const videoId = req.query.videoId;
+  const startTime = req.query.start || 0; // Start time in seconds
+  const duration = req.query.duration || 5; // Segment duration in seconds
+
+  // Path to the requested video
+  const videoPath = path.join(VIDEO_FOLDER, `${videoId}.mp4`);
+
+  if (!fs.existsSync(videoPath)) {
+      return res.status(404).send('Video not found');
+  }
+
+  // Use FFmpeg to extract the requested segment
+  const ffmpegCommand = `ffmpeg -ss ${startTime} -i "${videoPath}" -t ${duration} -c copy -f mp4 pipe:1`;
+
+  res.setHeader('Content-Type', 'video/mp4');
+
+  // Execute FFmpeg command and pipe the output to the response
+  const ffmpegProcess = exec(ffmpegCommand, { maxBuffer: 1024 * 1024 * 100 }, (error) => {
+      if (error) {
+          console.error('Error streaming video segment:', error);
+          res.status(500).send('Error processing video segment');
+      }
+  });
+
+  ffmpegProcess.stdout.pipe(res);
+});
+
+app.listen(8000, () => {
+  console.log('Server running on port 8000');
+});
