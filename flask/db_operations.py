@@ -1,6 +1,5 @@
 import os
 import ffmpeg
-import mysql.connector
 from db_config import db_connection
 from datetime import datetime
 
