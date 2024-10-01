@@ -1,5 +1,7 @@
 # Pre-requisites for the project
+
 Might not have mentioned about the database, there are two tables: Users and video_streaming.
+
 Create the database and apply the following:
 
 USE users;
